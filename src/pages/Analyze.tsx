@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import AppLayout from "@/components/AppLayout";
 import StatusBanner from "@/components/StatusBanner";
 import BoundingBoxOverlay from "@/components/BoundingBoxOverlay";
+import ModelSelector from "@/components/ModelSelector";
 import { friendlyLabel, type DetectionResult } from "@/lib/detection";
 import { detectWeaponInImage, fileToDataUrl } from "@/lib/detectWithAI";
 import { logDetection, uploadSnapshot } from "@/lib/scanLogger";
@@ -221,6 +222,7 @@ export default function Analyze() {
           </div>
 
           <div className="space-y-4">
+            <ModelSelector compact />
             <StatusBanner
               status={result?.status ?? null}
               topLabel={result?.topLabel ? friendlyLabel(result.topLabel) : null}
