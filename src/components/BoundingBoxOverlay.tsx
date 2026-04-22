@@ -8,8 +8,11 @@ interface Props {
 }
 
 /**
- * Overlays bounding boxes on top of a media element.
- * The canvas is positioned absolutely; parent must be `relative`.
+ * Overlays bounding boxes on top of a media element (video or image).
+ * The canvas's internal resolution matches the source's intrinsic pixel
+ * dimensions so the bbox coordinates (which are in source-pixel space)
+ * render correctly. The canvas is then stretched via CSS to fit on top
+ * of the displayed media.
  */
 export default function BoundingBoxOverlay({ detections, source, className }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -18,7 +21,8 @@ export default function BoundingBoxOverlay({ detections, source, className }: Pr
     const canvas = canvasRef.current;
     if (!canvas || !source) return;
 
-    let w = 0, h = 0;
+    let w = 0;
+    let h = 0;
     if (source instanceof HTMLVideoElement) {
       w = source.videoWidth;
       h = source.videoHeight;
@@ -37,23 +41,47 @@ export default function BoundingBoxOverlay({ detections, source, className }: Pr
 
     detections.forEach((d) => {
       const [x, y, bw, bh] = d.bbox;
+      if (bw <= 0 || bh <= 0) return;
+
       const color = d.isWeapon ? "hsl(0 84% 60%)" : "hsl(178 100% 50%)";
+      const stroke = Math.max(4, Math.min(w, h) / 160);
+
+      // Glow box
       ctx.strokeStyle = color;
-      ctx.lineWidth = Math.max(3, Math.min(w, h) / 200);
+      ctx.lineWidth = stroke;
       ctx.shadowColor = color;
-      ctx.shadowBlur = 12;
+      ctx.shadowBlur = 18;
       ctx.strokeRect(x, y, bw, bh);
       ctx.shadowBlur = 0;
 
+      // Corner brackets for that targeting feel
+      const corner = Math.min(bw, bh) * 0.18;
+      ctx.lineWidth = stroke * 1.4;
+      ctx.beginPath();
+      // top-left
+      ctx.moveTo(x, y + corner); ctx.lineTo(x, y); ctx.lineTo(x + corner, y);
+      // top-right
+      ctx.moveTo(x + bw - corner, y); ctx.lineTo(x + bw, y); ctx.lineTo(x + bw, y + corner);
+      // bottom-left
+      ctx.moveTo(x, y + bh - corner); ctx.lineTo(x, y + bh); ctx.lineTo(x + corner, y + bh);
+      // bottom-right
+      ctx.moveTo(x + bw - corner, y + bh); ctx.lineTo(x + bw, y + bh); ctx.lineTo(x + bw, y + bh - corner);
+      ctx.stroke();
+
+      // Label
+      const fontSize = Math.max(16, w / 45);
       const text = `${d.label.toUpperCase()} ${(d.score * 100).toFixed(0)}%`;
-      ctx.font = `bold ${Math.max(14, w / 50)}px 'JetBrains Mono', monospace`;
+      ctx.font = `bold ${fontSize}px 'JetBrains Mono', monospace`;
       const metrics = ctx.measureText(text);
-      const padX = 8, padY = 6;
-      const textH = Math.max(14, w / 50) + padY;
+      const padX = 10;
+      const padY = 8;
+      const textH = fontSize + padY;
+      const labelY = y - textH > 0 ? y - textH : y;
       ctx.fillStyle = color;
-      ctx.fillRect(x, Math.max(0, y - textH), metrics.width + padX * 2, textH);
-      ctx.fillStyle = "hsl(222 47% 5%)";
-      ctx.fillText(text, x + padX, Math.max(textH - padY / 2, y - padY / 2));
+      ctx.fillRect(x, labelY, metrics.width + padX * 2, textH);
+      ctx.fillStyle = "hsl(24 12% 5%)";
+      ctx.textBaseline = "top";
+      ctx.fillText(text, x + padX, labelY + padY / 2);
     });
   }, [detections, source]);
 
