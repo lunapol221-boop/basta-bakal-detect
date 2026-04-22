@@ -127,6 +127,10 @@ const en: Dict = {
   "analyze.reasoning": "AI Reasoning",
   "analyze.detectedObjects": "Detected Objects",
 
+  // Model selector
+  "model.eyebrow": "Detection Model",
+  "model.activeLabel": "Active",
+
   // Status banner / labels
   "status.allowed": "ALLOWED",
   "status.notAllowed": "NOT ALLOWED",
@@ -300,6 +304,10 @@ const tl: Dict = {
   "analyze.confidence": "Katiyakan",
   "analyze.reasoning": "Paliwanag ng AI",
   "analyze.detectedObjects": "Mga Natuklasang Bagay",
+
+  // Model selector
+  "model.eyebrow": "Modelo ng Detection",
+  "model.activeLabel": "Aktibo",
 
   // Status banner
   "status.allowed": "PINAPAYAGAN",
