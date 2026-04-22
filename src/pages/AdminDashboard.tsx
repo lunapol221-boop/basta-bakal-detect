@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
 import {
   Shield, ShieldAlert, ShieldCheck, AlertTriangle, Download, Trash2,
-  RefreshCw, Search, Loader2, ImageIcon
+  RefreshCw, Search, Loader2, Image as ImageIcon, Inbox,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -125,19 +125,29 @@ export default function AdminDashboard() {
 
   return (
     <AppLayout>
-      <div className="container py-8 max-w-7xl">
-        <div className="flex flex-wrap items-end justify-between gap-4 mb-8 animate-fade-up">
+      <div className="container py-10 max-w-7xl">
+        <div className="flex flex-wrap items-end justify-between gap-4 mb-10 animate-fade-up">
           <div>
-            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">Admin Dashboard</h1>
-            <p className="text-muted-foreground mt-1">
+            <p className="text-[11px] font-mono uppercase tracking-[0.2em] text-primary mb-3">
+              // Control Center
+            </p>
+            <h1 className="font-display text-4xl sm:text-5xl font-bold tracking-tight">
+              Admin <span className="text-orange-gradient">Dashboard</span>
+            </h1>
+            <p className="text-muted-foreground mt-2">
               Monitor scans, review flagged events, and manage detection history.
             </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={load} disabled={loading}>
+            <Button
+              variant="outline"
+              onClick={load}
+              disabled={loading}
+              className="rounded-full h-11 px-5 border-border hover:border-primary/50"
+            >
               <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} /> Refresh
             </Button>
-            <Button onClick={exportCSV}>
+            <Button onClick={exportCSV} className="btn-orange rounded-full h-11 px-5 font-semibold">
               <Download className="h-4 w-4" /> Export CSV
             </Button>
           </div>
@@ -152,18 +162,18 @@ export default function AdminDashboard() {
         </div>
 
         {/* Filters */}
-        <div className="glass rounded-xl p-4 mb-4 flex flex-wrap gap-3">
-          <div className="relative flex-1 min-w-[200px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <div className="surface rounded-2xl p-4 mb-4 flex flex-wrap gap-3">
+          <div className="relative flex-1 min-w-[220px]">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search labels, notes, scan type..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
+              className="pl-10 h-11 bg-background/40 border-border/60 rounded-xl focus-visible:border-primary"
             />
           </div>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-[180px] h-11 bg-background/40 border-border/60 rounded-xl">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -177,7 +187,7 @@ export default function AdminDashboard() {
             type="date"
             value={dateFilter}
             onChange={(e) => setDateFilter(e.target.value)}
-            className="w-[170px]"
+            className="w-[170px] h-11 bg-background/40 border-border/60 rounded-xl"
           />
           {(search || statusFilter !== "all" || dateFilter) && (
             <Button
@@ -187,90 +197,105 @@ export default function AdminDashboard() {
                 setStatusFilter("all");
                 setDateFilter("");
               }}
+              className="h-11 rounded-xl text-muted-foreground hover:text-foreground"
             >
-              Clear
+              Clear filters
             </Button>
           )}
         </div>
 
         {/* Table */}
-        <div className="glass rounded-xl overflow-hidden">
+        <div className="surface-elevated rounded-2xl overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-muted/40 text-muted-foreground text-xs uppercase tracking-wider font-mono">
+              <thead className="bg-secondary/40 text-muted-foreground text-[10px] uppercase tracking-[0.18em] font-mono">
                 <tr>
-                  <th className="px-4 py-3 text-left">Time</th>
-                  <th className="px-4 py-3 text-left">Type</th>
-                  <th className="px-4 py-3 text-left">Status</th>
-                  <th className="px-4 py-3 text-left">Detections</th>
-                  <th className="px-4 py-3 text-left">Image</th>
-                  <th className="px-4 py-3 text-right">Actions</th>
+                  <th className="px-5 py-4 text-left font-medium">Time</th>
+                  <th className="px-5 py-4 text-left font-medium">Source</th>
+                  <th className="px-5 py-4 text-left font-medium">Status</th>
+                  <th className="px-5 py-4 text-left font-medium">Detections</th>
+                  <th className="px-5 py-4 text-left font-medium">Snapshot</th>
+                  <th className="px-5 py-4 text-right font-medium">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={6} className="px-4 py-12 text-center">
+                    <td colSpan={6} className="px-4 py-16 text-center">
                       <Loader2 className="h-6 w-6 animate-spin text-primary mx-auto" />
                     </td>
                   </tr>
                 ) : filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-4 py-12 text-center text-muted-foreground font-mono text-sm">
-                      {logs.length === 0 ? "NO SCANS RECORDED YET" : "NO MATCHING RESULTS"}
+                    <td colSpan={6} className="px-4 py-20 text-center">
+                      <Inbox className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
+                      <p className="text-muted-foreground font-mono text-xs tracking-[0.18em] uppercase">
+                        {logs.length === 0 ? "No scans recorded yet" : "No matching results"}
+                      </p>
+                      {logs.length === 0 && (
+                        <p className="text-sm text-muted-foreground mt-2 max-w-sm mx-auto">
+                          Run a scan from the Live or Analyze pages — entries will appear here.
+                        </p>
+                      )}
                     </td>
                   </tr>
                 ) : (
                   filtered.map((l) => (
-                    <tr key={l.id} className="border-t border-border/40 hover:bg-card/60 transition-colors">
-                      <td className="px-4 py-3 font-mono text-xs whitespace-nowrap">
-                        {format(new Date(l.created_at), "MMM d, HH:mm:ss")}
+                    <tr key={l.id} className="border-t border-border/40 hover:bg-secondary/30 transition-colors">
+                      <td className="px-5 py-4 font-mono text-xs whitespace-nowrap text-muted-foreground tabular-nums">
+                        {format(new Date(l.created_at), "MMM d · HH:mm:ss")}
                       </td>
-                      <td className="px-4 py-3">
-                        <span className="text-xs font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-secondary">
+                      <td className="px-5 py-4">
+                        <span className="text-[10px] font-mono uppercase tracking-[0.18em] px-2 py-1 rounded-md bg-secondary border border-border/50">
                           {l.scan_type}
                         </span>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-5 py-4">
                         <StatusPill status={l.final_status} />
                       </td>
-                      <td className="px-4 py-3">
-                        <div className="flex flex-wrap gap-1 max-w-xs">
+                      <td className="px-5 py-4">
+                        <div className="flex flex-wrap gap-1.5 max-w-xs">
                           {l.detected_labels.slice(0, 3).map((lab, i) => (
                             <span
                               key={i}
-                              className="text-xs px-2 py-0.5 rounded bg-secondary font-mono"
+                              className="text-[11px] px-2 py-0.5 rounded-md bg-secondary/60 border border-border/40 font-mono text-foreground"
                               title={`${(l.confidence_scores[i] ?? 0) * 100}%`}
                             >
-                              {friendlyLabel(lab)} {l.confidence_scores[i] ? `${(l.confidence_scores[i] * 100).toFixed(0)}%` : ""}
+                              {friendlyLabel(lab)}{" "}
+                              <span className="text-muted-foreground">
+                                {l.confidence_scores[i] ? `${(l.confidence_scores[i] * 100).toFixed(0)}%` : ""}
+                              </span>
                             </span>
                           ))}
                           {l.detected_labels.length === 0 && (
                             <span className="text-xs text-muted-foreground">—</span>
                           )}
                           {l.detected_labels.length > 3 && (
-                            <span className="text-xs text-muted-foreground">+{l.detected_labels.length - 3}</span>
+                            <span className="text-xs text-muted-foreground self-center">
+                              +{l.detected_labels.length - 3}
+                            </span>
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-5 py-4">
                         {l.image_url ? (
                           <button
                             onClick={() => setPreviewUrl(l.image_url)}
-                            className="h-10 w-14 rounded overflow-hidden border border-border hover:border-primary transition-colors"
+                            className="h-11 w-16 rounded-lg overflow-hidden border border-border hover:border-primary transition-colors"
                           >
                             <img src={l.image_url} alt="snapshot" className="h-full w-full object-cover" />
                           </button>
                         ) : (
-                          <ImageIcon className="h-4 w-4 text-muted-foreground/40" />
+                          <ImageIcon className="h-4 w-4 text-muted-foreground/30" />
                         )}
                       </td>
-                      <td className="px-4 py-3 text-right">
+                      <td className="px-5 py-4 text-right">
                         <Button
                           size="sm"
                           variant="ghost"
                           onClick={() => setDeleteId(l.id)}
-                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          className="h-9 w-9 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg"
+                          aria-label="Delete log"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -282,13 +307,18 @@ export default function AdminDashboard() {
             </table>
           </div>
         </div>
+
+        {!loading && filtered.length > 0 && (
+          <p className="text-xs text-muted-foreground text-center mt-4 font-mono">
+            Showing {filtered.length} of {logs.length} logs
+          </p>
+        )}
       </div>
 
-      {/* Image preview */}
       <Dialog open={!!previewUrl} onOpenChange={(o) => !o && setPreviewUrl(null)}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-3xl bg-card border-border">
           <DialogHeader>
-            <DialogTitle>Snapshot Preview</DialogTitle>
+            <DialogTitle className="font-display">Snapshot Preview</DialogTitle>
           </DialogHeader>
           {previewUrl && (
             <img src={previewUrl} alt="snapshot" className="w-full rounded-lg border border-border" />
@@ -296,11 +326,10 @@ export default function AdminDashboard() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete confirm */}
       <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="bg-card border-border">
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete this log?</AlertDialogTitle>
+            <AlertDialogTitle className="font-display">Delete this log?</AlertDialogTitle>
             <AlertDialogDescription>
               This will permanently remove the detection record. The stored snapshot
               file will remain in storage.
@@ -327,20 +356,22 @@ function StatCard({
   icon: any; label: string; value: number;
   tint: "primary" | "destructive" | "success" | "warning";
 }) {
-  const tintClass = {
-    primary: "text-primary bg-primary/10 border-primary/30",
-    destructive: "text-destructive bg-destructive/10 border-destructive/30",
-    success: "text-success bg-success/10 border-success/30",
-    warning: "text-warning bg-warning/10 border-warning/30",
+  const tintMap = {
+    primary: { bg: "bg-primary/10", border: "border-primary/30", text: "text-primary" },
+    destructive: { bg: "bg-destructive/10", border: "border-destructive/30", text: "text-destructive" },
+    success: { bg: "bg-success/10", border: "border-success/30", text: "text-success" },
+    warning: { bg: "bg-warning/10", border: "border-warning/30", text: "text-warning" },
   }[tint];
   return (
-    <div className="glass rounded-xl p-5 flex items-center gap-4">
-      <div className={cn("h-12 w-12 rounded-lg flex items-center justify-center border", tintClass)}>
-        <Icon className="h-6 w-6" />
+    <div className="surface rounded-2xl p-5 flex items-center gap-4 hover:border-border/80 transition-colors">
+      <div className={cn("h-12 w-12 rounded-xl flex items-center justify-center border", tintMap.bg, tintMap.border, tintMap.text)}>
+        <Icon className="h-5 w-5" strokeWidth={2.2} />
       </div>
-      <div>
-        <p className="text-3xl font-bold font-mono">{value}</p>
-        <p className="text-xs uppercase tracking-widest text-muted-foreground font-mono">{label}</p>
+      <div className="min-w-0">
+        <p className="font-display text-3xl font-bold tabular-nums leading-none">{value}</p>
+        <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground font-mono mt-1.5">
+          {label}
+        </p>
       </div>
     </div>
   );
@@ -353,7 +384,10 @@ function StatusPill({ status }: { status: "ALLOWED" | "NOT_ALLOWED" | "UNSURE" }
     UNSURE: "bg-warning/15 text-warning border-warning/40",
   }[status];
   return (
-    <span className={cn("inline-flex items-center px-2.5 py-1 rounded-md text-xs font-mono font-semibold border", cfg)}>
+    <span className={cn(
+      "inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-mono font-bold border tracking-wider whitespace-nowrap",
+      cfg
+    )}>
       {statusLabel(status)}
     </span>
   );
