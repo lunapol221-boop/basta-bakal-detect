@@ -48,7 +48,7 @@ export default function AdminDashboard() {
       .order("created_at", { ascending: false })
       .limit(500);
     if (error) {
-      toast.error("Failed to load logs: " + error.message);
+      toast.error(t("admin.loadFailed", { msg: error.message }));
     } else {
       setLogs((data ?? []) as LogRow[]);
     }
@@ -57,6 +57,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const filtered = useMemo(() => {
@@ -88,9 +89,9 @@ export default function AdminDashboard() {
   async function handleDelete(id: string) {
     const { error } = await supabase.from("detection_logs").delete().eq("id", id);
     if (error) {
-      toast.error("Delete failed: " + error.message);
+      toast.error(t("admin.deleteFailed", { msg: error.message }));
     } else {
-      toast.success("Log deleted.");
+      toast.success(t("admin.deleted"));
       setLogs((prev) => prev.filter((l) => l.id !== id));
     }
     setDeleteId(null);
@@ -98,7 +99,7 @@ export default function AdminDashboard() {
 
   function exportCSV() {
     if (filtered.length === 0) {
-      toast.error("No logs to export.");
+      toast.error(t("admin.exportEmpty"));
       return;
     }
     const header = ["id", "created_at", "scan_type", "final_status", "detected_labels", "confidence_scores", "image_url", "notes"];
@@ -122,7 +123,7 @@ export default function AdminDashboard() {
     a.download = `bastabakalbawal-logs-${Date.now()}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-    toast.success(`Exported ${filtered.length} rows.`);
+    toast.success(t("admin.exported", { n: filtered.length }));
   }
 
   return (
@@ -131,13 +132,13 @@ export default function AdminDashboard() {
         <div className="flex flex-wrap items-end justify-between gap-4 mb-10 animate-fade-up">
           <div>
             <p className="text-[11px] font-mono uppercase tracking-[0.2em] text-primary mb-3">
-              // Control Center
+              {t("admin.eyebrow")}
             </p>
             <h1 className="font-display text-4xl sm:text-5xl font-bold tracking-tight">
-              Admin <span className="text-orange-gradient">Dashboard</span>
+              {t("admin.title.a")}<span className="text-orange-gradient">{t("admin.title.b")}</span>
             </h1>
             <p className="text-muted-foreground mt-2">
-              Monitor scans, review flagged events, and manage detection history.
+              {t("admin.subtitle")}
             </p>
           </div>
           <div className="flex gap-2">
@@ -147,20 +148,20 @@ export default function AdminDashboard() {
               disabled={loading}
               className="rounded-full h-11 px-5 border-border hover:border-primary/50"
             >
-              <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} /> Refresh
+              <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} /> {t("admin.refresh")}
             </Button>
             <Button onClick={exportCSV} className="btn-orange rounded-full h-11 px-5 font-semibold">
-              <Download className="h-4 w-4" /> Export CSV
+              <Download className="h-4 w-4" /> {t("admin.export")}
             </Button>
           </div>
         </div>
 
         {/* Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <StatCard icon={Shield} label="Total Scans" value={stats.total} tint="primary" />
-          <StatCard icon={ShieldAlert} label="Not Allowed" value={stats.flagged} tint="destructive" />
-          <StatCard icon={ShieldCheck} label="Allowed" value={stats.allowed} tint="success" />
-          <StatCard icon={AlertTriangle} label="Unsure" value={stats.unsure} tint="warning" />
+          <StatCard icon={Shield} label={t("admin.stat.total")} value={stats.total} tint="primary" />
+          <StatCard icon={ShieldAlert} label={t("admin.stat.notAllowed")} value={stats.flagged} tint="destructive" />
+          <StatCard icon={ShieldCheck} label={t("admin.stat.allowed")} value={stats.allowed} tint="success" />
+          <StatCard icon={AlertTriangle} label={t("admin.stat.unsure")} value={stats.unsure} tint="warning" />
         </div>
 
         {/* Filters */}
@@ -168,7 +169,7 @@ export default function AdminDashboard() {
           <div className="relative flex-1 min-w-[220px]">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search labels, notes, scan type..."
+              placeholder={t("admin.search")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-10 h-11 bg-background/40 border-border/60 rounded-xl focus-visible:border-primary"
@@ -179,10 +180,10 @@ export default function AdminDashboard() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All statuses</SelectItem>
-              <SelectItem value="NOT_ALLOWED">Not Allowed</SelectItem>
-              <SelectItem value="ALLOWED">Allowed</SelectItem>
-              <SelectItem value="UNSURE">Unsure</SelectItem>
+              <SelectItem value="all">{t("admin.filter.all")}</SelectItem>
+              <SelectItem value="NOT_ALLOWED">{t("admin.stat.notAllowed")}</SelectItem>
+              <SelectItem value="ALLOWED">{t("admin.stat.allowed")}</SelectItem>
+              <SelectItem value="UNSURE">{t("admin.stat.unsure")}</SelectItem>
             </SelectContent>
           </Select>
           <Input
@@ -201,7 +202,7 @@ export default function AdminDashboard() {
               }}
               className="h-11 rounded-xl text-muted-foreground hover:text-foreground"
             >
-              Clear filters
+              {t("admin.clear")}
             </Button>
           )}
         </div>
@@ -212,12 +213,12 @@ export default function AdminDashboard() {
             <table className="w-full text-sm">
               <thead className="bg-secondary/40 text-muted-foreground text-[10px] uppercase tracking-[0.18em] font-mono">
                 <tr>
-                  <th className="px-5 py-4 text-left font-medium">Time</th>
-                  <th className="px-5 py-4 text-left font-medium">Source</th>
-                  <th className="px-5 py-4 text-left font-medium">Status</th>
-                  <th className="px-5 py-4 text-left font-medium">Detections</th>
-                  <th className="px-5 py-4 text-left font-medium">Snapshot</th>
-                  <th className="px-5 py-4 text-right font-medium">Actions</th>
+                  <th className="px-5 py-4 text-left font-medium">{t("admin.col.time")}</th>
+                  <th className="px-5 py-4 text-left font-medium">{t("admin.col.source")}</th>
+                  <th className="px-5 py-4 text-left font-medium">{t("admin.col.status")}</th>
+                  <th className="px-5 py-4 text-left font-medium">{t("admin.col.detections")}</th>
+                  <th className="px-5 py-4 text-left font-medium">{t("admin.col.snapshot")}</th>
+                  <th className="px-5 py-4 text-right font-medium">{t("admin.col.actions")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -232,11 +233,11 @@ export default function AdminDashboard() {
                     <td colSpan={6} className="px-4 py-20 text-center">
                       <Inbox className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
                       <p className="text-muted-foreground font-mono text-xs tracking-[0.18em] uppercase">
-                        {logs.length === 0 ? "No scans recorded yet" : "No matching results"}
+                        {logs.length === 0 ? t("admin.empty.none") : t("admin.empty.noMatch")}
                       </p>
                       {logs.length === 0 && (
                         <p className="text-sm text-muted-foreground mt-2 max-w-sm mx-auto">
-                          Run a scan from the Live or Analyze pages — entries will appear here.
+                          {t("admin.empty.hint")}
                         </p>
                       )}
                     </td>
@@ -297,7 +298,7 @@ export default function AdminDashboard() {
                           variant="ghost"
                           onClick={() => setDeleteId(l.id)}
                           className="h-9 w-9 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg"
-                          aria-label="Delete log"
+                          aria-label={t("admin.delete.confirm")}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -312,7 +313,7 @@ export default function AdminDashboard() {
 
         {!loading && filtered.length > 0 && (
           <p className="text-xs text-muted-foreground text-center mt-4 font-mono">
-            Showing {filtered.length} of {logs.length} logs
+            {t("admin.showing", { a: filtered.length, b: logs.length })}
           </p>
         )}
       </div>
@@ -320,7 +321,7 @@ export default function AdminDashboard() {
       <Dialog open={!!previewUrl} onOpenChange={(o) => !o && setPreviewUrl(null)}>
         <DialogContent className="max-w-3xl bg-card border-border">
           <DialogHeader>
-            <DialogTitle className="font-display">Snapshot Preview</DialogTitle>
+            <DialogTitle className="font-display">{t("admin.preview")}</DialogTitle>
           </DialogHeader>
           {previewUrl && (
             <img src={previewUrl} alt="snapshot" className="w-full rounded-lg border border-border" />
@@ -331,19 +332,18 @@ export default function AdminDashboard() {
       <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
         <AlertDialogContent className="bg-card border-border">
           <AlertDialogHeader>
-            <AlertDialogTitle className="font-display">Delete this log?</AlertDialogTitle>
+            <AlertDialogTitle className="font-display">{t("admin.delete.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently remove the detection record. The stored snapshot
-              file will remain in storage.
+              {t("admin.delete.desc")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("admin.delete.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => deleteId && handleDelete(deleteId)}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Delete
+              {t("admin.delete.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -380,17 +380,23 @@ function StatCard({
 }
 
 function StatusPill({ status }: { status: "ALLOWED" | "NOT_ALLOWED" | "UNSURE" }) {
+  const { t } = useI18n();
   const cfg = {
     ALLOWED: "bg-success/15 text-success border-success/40",
     NOT_ALLOWED: "bg-destructive/15 text-destructive border-destructive/40",
     UNSURE: "bg-warning/15 text-warning border-warning/40",
+  }[status];
+  const labelKey = {
+    ALLOWED: "status.allowed",
+    NOT_ALLOWED: "status.notAllowed",
+    UNSURE: "status.unsure",
   }[status];
   return (
     <span className={cn(
       "inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-mono font-bold border tracking-wider whitespace-nowrap",
       cfg
     )}>
-      {statusLabel(status)}
+      {t(labelKey)}
     </span>
   );
 }
