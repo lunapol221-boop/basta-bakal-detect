@@ -8,11 +8,13 @@ import { friendlyLabel, type DetectionResult } from "@/lib/detection";
 import { captureVideoFrame, detectWeaponInImage } from "@/lib/detectWithAI";
 import { logDetection, uploadSnapshot } from "@/lib/scanLogger";
 import { applyThreshold, useDetectionThreshold } from "@/lib/useDetectionThreshold";
+import { useI18n } from "@/lib/i18n";
 import { toast } from "sonner";
 
 const DETECT_INTERVAL_MS = 1500;
 
 export default function LiveScan() {
+  const { t } = useI18n();
   const threshold = useDetectionThreshold();
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -46,7 +48,7 @@ export default function LiveScan() {
       setPaused(false);
     } catch (e) {
       console.error("Camera error:", e);
-      toast.error("Camera access denied or camera not available.");
+      toast.error(t("live.permissionDenied"));
     }
   }, [facingMode]);
 
@@ -127,8 +129,8 @@ export default function LiveScan() {
       });
       setLastFlagged(new Date().toLocaleTimeString());
       if (evald.status === "NOT_ALLOWED") {
-        toast.error(`Weapon detected: ${friendlyLabel(evald.topLabel)}`, {
-          description: "Frame saved to detection log.",
+        toast.error(t("live.weaponDetected", { label: friendlyLabel(evald.topLabel) }), {
+          description: t("live.savedToLog"),
         });
       }
     } catch (e) {
@@ -141,20 +143,19 @@ export default function LiveScan() {
       <div className="container py-10 max-w-7xl">
         <div className="mb-10 animate-fade-up">
           <p className="text-[11px] font-mono uppercase tracking-[0.2em] text-primary mb-3">
-            // Real-Time Module
+            {t("live.eyebrow")}
           </p>
           <h1 className="font-display text-4xl sm:text-5xl font-bold tracking-tight mb-3">
-            Live <span className="text-orange-gradient">Scan</span>
+            {t("live.title.a")}<span className="text-orange-gradient">{t("live.title.b")}</span>
           </h1>
           <p className="text-muted-foreground max-w-2xl">
-            Stream from your webcam with AI vision analysis every {DETECT_INTERVAL_MS}ms.
-            Flagged frames are automatically captured and added to the audit log.
+            {t("live.subtitle", { ms: DETECT_INTERVAL_MS })}
           </p>
         </div>
 
         {error && (
           <div className="surface rounded-2xl p-6 border-destructive/50 mb-6">
-            <p className="text-destructive font-medium">Detection error</p>
+            <p className="text-destructive font-medium">{t("live.error.title")}</p>
             <p className="text-sm text-muted-foreground mt-1">{error}</p>
           </div>
         )}
@@ -195,9 +196,9 @@ export default function LiveScan() {
                   <div className="h-16 w-16 rounded-2xl bg-primary/10 border border-primary/30 flex items-center justify-center">
                     <Camera className="h-7 w-7 text-primary" />
                   </div>
-                  <p className="font-mono text-xs tracking-[0.2em] uppercase">Camera Offline</p>
+                  <p className="font-mono text-xs tracking-[0.2em] uppercase">{t("live.cameraOffline")}</p>
                   <p className="text-sm text-center max-w-xs px-6">
-                    Click "Start Camera" to begin live screening.
+                    {t("live.cameraOfflineHint")}
                   </p>
                 </div>
               )}
@@ -206,7 +207,7 @@ export default function LiveScan() {
                 <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3 py-1.5 rounded-full bg-background/80 backdrop-blur-md border border-border">
                   <span className={`h-2 w-2 rounded-full ${paused ? "bg-warning" : analyzing ? "bg-primary animate-blink" : "bg-destructive animate-blink"}`} />
                   <span className="text-[10px] font-mono uppercase tracking-[0.2em]">
-                    {paused ? "Paused" : analyzing ? "● Analyzing" : "● REC"}
+                    {paused ? t("live.status.paused") : analyzing ? t("live.status.analyzing") : t("live.status.rec")}
                   </span>
                 </div>
               )}
@@ -219,7 +220,7 @@ export default function LiveScan() {
                   size="lg"
                   className="btn-orange rounded-full h-12 px-6 font-semibold"
                 >
-                  <Camera className="h-4 w-4" /> Start Camera
+                  <Camera className="h-4 w-4" /> {t("live.start")}
                 </Button>
               ) : (
                 <>
@@ -230,7 +231,7 @@ export default function LiveScan() {
                     className="rounded-full h-12 px-6 border-border hover:border-primary/50 hover:bg-secondary"
                   >
                     {paused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
-                    {paused ? "Resume" : "Pause"}
+                    {paused ? t("live.resume") : t("live.pause")}
                   </Button>
                   <Button
                     onClick={stopCamera}
@@ -238,7 +239,7 @@ export default function LiveScan() {
                     size="lg"
                     className="rounded-full h-12 px-6 border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
                   >
-                    <CameraOff className="h-4 w-4" /> Stop
+                    <CameraOff className="h-4 w-4" /> {t("live.stop")}
                   </Button>
                 </>
               )}
@@ -247,10 +248,10 @@ export default function LiveScan() {
                 variant="outline"
                 size="lg"
                 className="rounded-full h-12 px-6 border-border hover:border-primary/50 hover:bg-secondary"
-                title={`Switch to ${facingMode === "environment" ? "front" : "rear"} camera`}
+                title={t("live.switch")}
               >
                 <SwitchCamera className="h-4 w-4" />
-                {facingMode === "environment" ? "Front" : "Rear"} Camera
+                {t("live.switch")}
               </Button>
             </div>
           </div>
@@ -265,7 +266,7 @@ export default function LiveScan() {
             {result?.reason && (
               <div className="surface rounded-2xl p-4">
                 <p className="text-[11px] font-mono tracking-[0.2em] uppercase text-muted-foreground mb-2">
-                  AI Reasoning
+                  {t("live.reasoning")}
                 </p>
                 <p className="text-sm">{result.reason}</p>
               </div>
@@ -273,20 +274,20 @@ export default function LiveScan() {
 
             <div className="surface rounded-2xl p-5">
               <p className="text-[11px] font-mono tracking-[0.2em] uppercase text-muted-foreground mb-4">
-                Telemetry
+                {t("live.telemetry")}
               </p>
               <div className="grid grid-cols-2 gap-3">
-                <Stat icon={Activity} label="Frames" value={scanCount.toString()} />
-                <Stat icon={Zap} label="Cadence" value={`${DETECT_INTERVAL_MS}ms`} />
-                <Stat icon={Target} label="Detected" value={(result?.detections.length ?? 0).toString()} />
-                <Stat icon={Camera} label="Last flag" value={lastFlagged ?? "—"} />
+                <Stat icon={Activity} label={t("live.frames")} value={scanCount.toString()} />
+                <Stat icon={Zap} label={t("live.cadence")} value={`${DETECT_INTERVAL_MS}ms`} />
+                <Stat icon={Target} label={t("live.detected")} value={(result?.detections.length ?? 0).toString()} />
+                <Stat icon={Camera} label={t("live.lastFlag")} value={lastFlagged ?? "—"} />
               </div>
             </div>
 
             {result && result.detections.length > 0 && (
               <div className="surface rounded-2xl p-5 animate-fade-up">
                 <p className="text-[11px] font-mono tracking-[0.2em] uppercase text-muted-foreground mb-4">
-                  Detected Objects
+                  {t("live.detectedObjects")}
                 </p>
                 <ul className="space-y-2">
                   {result.detections.slice(0, 6).map((d, i) => (

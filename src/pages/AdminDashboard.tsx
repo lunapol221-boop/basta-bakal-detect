@@ -15,7 +15,8 @@ import {
 import AppLayout from "@/components/AppLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { friendlyLabel, statusLabel } from "@/lib/detection";
+import { friendlyLabel } from "@/lib/detection";
+import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 interface LogRow {
@@ -30,6 +31,7 @@ interface LogRow {
 }
 
 export default function AdminDashboard() {
+  const { t } = useI18n();
   const [logs, setLogs] = useState<LogRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");

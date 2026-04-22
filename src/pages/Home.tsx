@@ -5,61 +5,53 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Logo from "@/components/Logo";
-
-const features = [
-  {
-    icon: Radio,
-    title: "Real-Time Vision",
-    desc: "Continuous webcam analysis with live bounding boxes every 1.5 seconds.",
-  },
-  {
-    icon: Camera,
-    title: "Capture & Upload",
-    desc: "Snap a photo from your device camera or analyze any uploaded image.",
-  },
-  {
-    icon: Database,
-    title: "Persistent Audit",
-    desc: "Every flagged event is timestamped, stored, and ready for review.",
-  },
-  {
-    icon: Lock,
-    title: "Secure Console",
-    desc: "Public scanning, locked dashboard. Only admins access history.",
-  },
-];
-
-const decisionStates = [
-  {
-    Icon: CheckCircle2,
-    label: "ALLOWED",
-    desc: "No deadly weapon detected.",
-    accent: "text-success",
-    border: "border-success/30",
-    bg: "bg-success/5",
-  },
-  {
-    Icon: ShieldAlert,
-    label: "NOT ALLOWED",
-    desc: "Deadly weapon identified.",
-    accent: "text-destructive",
-    border: "border-destructive/30",
-    bg: "bg-destructive/5",
-  },
-  {
-    Icon: AlertTriangle,
-    label: "UNSURE",
-    desc: "Low confidence, please retry.",
-    accent: "text-warning",
-    border: "border-warning/30",
-    bg: "bg-warning/5",
-  },
-];
+import { useI18n } from "@/lib/i18n";
 
 export default function Home() {
+  const { t } = useI18n();
+
+  const features = [
+    { icon: Radio, title: t("home.feature.realtime.title"), desc: t("home.feature.realtime.desc") },
+    { icon: Camera, title: t("home.feature.capture.title"), desc: t("home.feature.capture.desc") },
+    { icon: Database, title: t("home.feature.audit.title"), desc: t("home.feature.audit.desc") },
+    { icon: Lock, title: t("home.feature.console.title"), desc: t("home.feature.console.desc") },
+  ];
+
+  const decisionStates = [
+    {
+      Icon: CheckCircle2,
+      label: t("home.outcome.allowed"),
+      desc: t("home.outcome.allowed.desc"),
+      accent: "text-success",
+      border: "border-success/30",
+      bg: "bg-success/5",
+    },
+    {
+      Icon: ShieldAlert,
+      label: t("home.outcome.notallowed"),
+      desc: t("home.outcome.notallowed.desc"),
+      accent: "text-destructive",
+      border: "border-destructive/30",
+      bg: "bg-destructive/5",
+    },
+    {
+      Icon: AlertTriangle,
+      label: t("home.outcome.unsure"),
+      desc: t("home.outcome.unsure.desc"),
+      accent: "text-warning",
+      border: "border-warning/30",
+      bg: "bg-warning/5",
+    },
+  ];
+
+  const steps = [
+    { n: "01", title: t("home.workflow.s1.title"), desc: t("home.workflow.s1.desc") },
+    { n: "02", title: t("home.workflow.s2.title"), desc: t("home.workflow.s2.desc") },
+    { n: "03", title: t("home.workflow.s3.title"), desc: t("home.workflow.s3.desc") },
+  ];
+
   return (
     <div className="relative">
-      {/* Hero ambient */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{ background: "var(--gradient-hero)" }}
@@ -73,25 +65,24 @@ export default function Home() {
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full surface mb-8">
             <Sparkles className="h-3.5 w-3.5 text-primary" />
             <span className="text-[11px] font-mono tracking-[0.18em] uppercase text-muted-foreground">
-              Computer Vision · On-Device · Private
+              {t("home.badge")}
             </span>
           </div>
 
           <h1 className="font-display text-5xl sm:text-7xl lg:text-[88px] font-bold tracking-[-0.04em] leading-[0.95] mb-6">
-            Detect deadly weapons.
+            {t("home.title.line1")}
             <br />
-            <span className="text-orange-gradient">Instantly.</span>
+            <span className="text-orange-gradient">{t("home.title.line2")}</span>
           </h1>
           <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
-            BastaBakalBawal is an AI security screening platform that analyzes camera
-            feeds, captures, and uploaded images to flag dangerous objects in real time.
+            {t("home.subtitle")}
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Button asChild size="lg" className="btn-orange rounded-full h-12 px-7 text-[15px] font-semibold">
               <Link to="/scan">
                 <Radio className="h-4 w-4" />
-                Start Live Scan
+                {t("home.cta.live")}
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
@@ -103,25 +94,23 @@ export default function Home() {
             >
               <Link to="/analyze">
                 <Upload className="h-4 w-4" />
-                Analyze Image
+                {t("home.cta.analyze")}
               </Link>
             </Button>
           </div>
 
-          {/* Trust strip */}
           <div className="mt-12 flex items-center justify-center gap-8 text-[11px] font-mono uppercase tracking-[0.18em] text-muted-foreground/70">
-            <span>Browser-side AI</span>
+            <span>{t("home.trust.1")}</span>
             <span className="hidden sm:inline">·</span>
-            <span className="hidden sm:inline">No Cloud Inference</span>
+            <span className="hidden sm:inline">{t("home.trust.2")}</span>
             <span className="hidden md:inline">·</span>
-            <span className="hidden md:inline">Auto-Logged</span>
+            <span className="hidden md:inline">{t("home.trust.3")}</span>
           </div>
         </div>
 
-        {/* Decision card preview */}
         <div className="mt-20 max-w-5xl mx-auto">
           <p className="text-center text-[11px] font-mono uppercase tracking-[0.2em] text-muted-foreground mb-6">
-            Three Possible Outcomes
+            {t("home.outcomes.title")}
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {decisionStates.map((s, i) => (
@@ -145,10 +134,12 @@ export default function Home() {
       <section className="container relative py-20">
         <div className="max-w-2xl mb-12 animate-fade-up">
           <p className="text-[11px] font-mono uppercase tracking-[0.2em] text-primary mb-3">
-            // Capabilities
+            {t("home.features.eyebrow")}
           </p>
           <h2 className="font-display text-3xl sm:text-5xl font-bold tracking-tight leading-[1.05]">
-            Built for security teams who need <span className="text-orange-gradient">certainty</span>.
+            {t("home.features.title.a")}
+            <span className="text-orange-gradient">{t("home.features.title.b")}</span>
+            {t("home.features.title.c")}
           </h2>
         </div>
 
@@ -184,21 +175,19 @@ export default function Home() {
           />
           <div className="relative">
             <p className="text-[11px] font-mono uppercase tracking-[0.2em] text-primary mb-3">
-              // Workflow
+              {t("home.workflow.eyebrow")}
             </p>
             <h2 className="font-display text-3xl sm:text-5xl font-bold tracking-tight mb-12 max-w-2xl">
-              Three simple steps to a <span className="text-orange-gradient">trusted result</span>.
+              {t("home.workflow.title.a")}
+              <span className="text-orange-gradient">{t("home.workflow.title.b")}</span>
+              {t("home.workflow.title.c")}
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {[
-                { n: "01", title: "Capture or Stream", desc: "Open the live camera, snap a photo, or upload any image file." },
-                { n: "02", title: "AI Analyzes", desc: "On-device computer vision detects objects and ranks confidence." },
-                { n: "03", title: "Decision Issued", desc: "ALLOWED, NOT ALLOWED, or UNSURE — logged automatically." },
-              ].map((step) => (
+              {steps.map((step) => (
                 <div key={step.n} className="relative">
                   <div className="font-mono text-[11px] tracking-[0.2em] text-primary mb-3">
-                    STEP {step.n}
+                    {t("home.workflow.step")} {step.n}
                   </div>
                   <h3 className="font-display text-xl font-semibold mb-2 tracking-tight">
                     {step.title}
@@ -216,19 +205,17 @@ export default function Home() {
         <div className="max-w-3xl mx-auto text-center">
           <Logo className="h-14 w-14 mx-auto mb-6 animate-float" />
           <h2 className="font-display text-3xl sm:text-5xl font-bold tracking-tight mb-4">
-            Ready to screen?
+            {t("home.cta2.title")}
           </h2>
-          <p className="text-muted-foreground mb-8">
-            Start a live scan now — no setup, no signup required.
-          </p>
+          <p className="text-muted-foreground mb-8">{t("home.cta2.subtitle")}</p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Button asChild size="lg" className="btn-orange rounded-full h-12 px-7 font-semibold">
               <Link to="/scan">
-                Launch Live Scan <ChevronRight className="h-4 w-4" />
+                {t("home.cta2.launch")} <ChevronRight className="h-4 w-4" />
               </Link>
             </Button>
             <Button asChild size="lg" variant="ghost" className="rounded-full h-12 px-7 text-muted-foreground hover:text-foreground">
-              <Link to="/admin/login">Admin Console →</Link>
+              <Link to="/admin/login">{t("home.cta2.admin")}</Link>
             </Button>
           </div>
         </div>

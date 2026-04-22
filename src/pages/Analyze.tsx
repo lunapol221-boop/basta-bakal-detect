@@ -8,9 +8,11 @@ import { friendlyLabel, type DetectionResult } from "@/lib/detection";
 import { detectWeaponInImage, fileToDataUrl } from "@/lib/detectWithAI";
 import { logDetection, uploadSnapshot } from "@/lib/scanLogger";
 import { applyThreshold, useDetectionThreshold } from "@/lib/useDetectionThreshold";
+import { useI18n } from "@/lib/i18n";
 import { toast } from "sonner";
 
 export default function Analyze() {
+  const { t } = useI18n();
   const threshold = useDetectionThreshold();
   const [imgUrl, setImgUrl] = useState<string | null>(null);
   const [imgEl, setImgEl] = useState<HTMLImageElement | null>(null);
@@ -23,7 +25,7 @@ export default function Analyze() {
 
   function handleFile(file: File, scanType: "upload" | "capture") {
     if (!file.type.startsWith("image/")) {
-      toast.error("Please select an image file.");
+      toast.error(t("analyze.notImage"));
       return;
     }
     const url = URL.createObjectURL(file);
@@ -60,15 +62,15 @@ export default function Analyze() {
       setSavedTime(new Date().toLocaleTimeString());
 
       if (evald.status === "NOT_ALLOWED") {
-        toast.error(`Weapon detected: ${friendlyLabel(evald.topLabel)}`);
+        toast.error(t("live.weaponDetected", { label: friendlyLabel(evald.topLabel) }));
       } else if (evald.status === "ALLOWED") {
-        toast.success("Image cleared.");
+        toast.success(t("analyze.cleared"));
       } else {
-        toast.warning("Result unclear — please retry with a clearer image.");
+        toast.warning(t("analyze.unclear"));
       }
     } catch (e: any) {
       console.error("Analyze error:", e);
-      toast.error("Analysis failed: " + (e?.message ?? "unknown"));
+      toast.error(t("analyze.failed", { msg: e?.message ?? "unknown" }));
     } finally {
       setAnalyzing(false);
     }
@@ -94,14 +96,13 @@ export default function Analyze() {
       <div className="container py-10 max-w-7xl">
         <div className="mb-10 animate-fade-up">
           <p className="text-[11px] font-mono uppercase tracking-[0.2em] text-primary mb-3">
-            // Still Image Module
+            {t("analyze.eyebrow")}
           </p>
           <h1 className="font-display text-4xl sm:text-5xl font-bold tracking-tight mb-3">
-            Analyze <span className="text-orange-gradient">Image</span>
+            {t("analyze.title.a")}<span className="text-orange-gradient">{t("analyze.title.b")}</span>
           </h1>
           <p className="text-muted-foreground max-w-2xl">
-            Capture from your camera or upload an image. The result is logged
-            automatically with the snapshot and AI confidence score.
+            {t("analyze.subtitle")}
           </p>
         </div>
 
@@ -138,7 +139,7 @@ export default function Analyze() {
                       <div className="flex items-center gap-3 text-primary">
                         <Loader2 className="h-6 w-6 animate-spin" />
                         <span className="font-mono tracking-[0.2em] uppercase text-sm">
-                          AI Analyzing
+                          {t("analyze.analyzing")}
                         </span>
                       </div>
                     </div>
@@ -155,10 +156,10 @@ export default function Analyze() {
                   </div>
                   <div className="text-center">
                     <p className="font-display text-lg font-semibold text-foreground mb-1">
-                      Drop an image or click to browse
+                      {t("analyze.dropTitle")}
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      PNG, JPG, WebP — up to 20 MB
+                      {t("analyze.dropHint")}
                     </p>
                   </div>
                 </button>
@@ -172,7 +173,7 @@ export default function Analyze() {
                 size="lg"
                 className="btn-orange rounded-full h-12 px-6 font-semibold"
               >
-                <Upload className="h-4 w-4" /> Upload Image
+                <Upload className="h-4 w-4" /> {t("analyze.upload")}
               </Button>
               <Button
                 onClick={() => cameraInputRef.current?.click()}
@@ -181,7 +182,7 @@ export default function Analyze() {
                 variant="outline"
                 className="rounded-full h-12 px-6 border-border hover:border-primary/50 hover:bg-secondary"
               >
-                <Camera className="h-4 w-4" /> Capture Photo
+                <Camera className="h-4 w-4" /> {t("analyze.capture")}
               </Button>
               {imgUrl && (
                 <Button
@@ -190,7 +191,7 @@ export default function Analyze() {
                   size="lg"
                   className="rounded-full h-12 px-6 text-muted-foreground hover:text-foreground"
                 >
-                  <X className="h-4 w-4" /> Clear
+                  <X className="h-4 w-4" /> {t("analyze.tryAnother")}
                 </Button>
               )}
               <input
@@ -229,7 +230,7 @@ export default function Analyze() {
             {result?.reason && (
               <div className="surface rounded-2xl p-4">
                 <p className="text-[11px] font-mono tracking-[0.2em] uppercase text-muted-foreground mb-2">
-                  AI Reasoning
+                  {t("analyze.reasoning")}
                 </p>
                 <p className="text-sm">{result.reason}</p>
               </div>
@@ -238,14 +239,14 @@ export default function Analyze() {
             {result && (
               <div className="surface rounded-2xl p-5">
                 <p className="text-[11px] font-mono tracking-[0.2em] uppercase text-muted-foreground mb-4">
-                  Scan Report
+                  {t("analyze.report")}
                 </p>
                 <div className="space-y-2.5 text-sm">
-                  <Row label="Saved at" value={savedTime ?? "—"} />
-                  <Row label="Detections" value={result.detections.length.toString()} />
-                  <Row label="Top match" value={result.topLabel ? friendlyLabel(result.topLabel) : "—"} />
+                  <Row label={t("analyze.savedAt")} value={savedTime ?? "—"} />
+                  <Row label={t("analyze.detections")} value={result.detections.length.toString()} />
+                  <Row label={t("analyze.topMatch")} value={result.topLabel ? friendlyLabel(result.topLabel) : "—"} />
                   <Row
-                    label="Confidence"
+                    label={t("analyze.confidence")}
                     value={result.topScore != null ? `${(result.topScore * 100).toFixed(1)}%` : "—"}
                   />
                 </div>
@@ -255,7 +256,7 @@ export default function Analyze() {
             {result && result.detections.length > 0 && (
               <div className="surface rounded-2xl p-5 animate-fade-up">
                 <p className="text-[11px] font-mono tracking-[0.2em] uppercase text-muted-foreground mb-4">
-                  All Objects
+                  {t("analyze.detectedObjects")}
                 </p>
                 <ul className="space-y-2">
                   {result.detections.map((d, i) => (
@@ -281,7 +282,7 @@ export default function Analyze() {
                 variant="outline"
                 className="w-full rounded-full h-11 border-warning/40 text-warning hover:bg-warning/10 hover:text-warning"
               >
-                <RefreshCw className="h-4 w-4" /> Try Again
+                <RefreshCw className="h-4 w-4" /> {t("analyze.tryAgain")}
               </Button>
             )}
 
@@ -289,7 +290,7 @@ export default function Analyze() {
               <div className="surface rounded-2xl p-5 text-center">
                 <ImageIcon className="h-8 w-8 text-muted-foreground/50 mx-auto mb-3" />
                 <p className="text-xs text-muted-foreground">
-                  Upload or capture an image to see analysis results.
+                  {t("status.awaitingHint")}
                 </p>
               </div>
             )}
