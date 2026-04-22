@@ -76,9 +76,13 @@ export default function LiveScan() {
         setScanCount((n) => n + 1);
         setError(null);
 
-        if (evald.status === "NOT_ALLOWED" && Date.now() - lastSavedRef.current > 4000) {
-          lastSavedRef.current = Date.now();
-          await saveFlaggedFrame(frame.blob, evald);
+        const now = Date.now();
+        const isFlagged = evald.status === "NOT_ALLOWED";
+        // Save flagged frames every 4s, allowed/unsure every 10s to avoid spam
+        const throttleMs = isFlagged ? 4000 : 10000;
+        if (now - lastSavedRef.current > throttleMs) {
+          lastSavedRef.current = now;
+          await saveFrame(frame.blob, evald);
         }
       } catch (e: any) {
         console.error("Detection error:", e);
