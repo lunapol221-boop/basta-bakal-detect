@@ -8,9 +8,11 @@ import { friendlyLabel, type DetectionResult } from "@/lib/detection";
 import { detectWeaponInImage, fileToDataUrl } from "@/lib/detectWithAI";
 import { logDetection, uploadSnapshot } from "@/lib/scanLogger";
 import { applyThreshold, useDetectionThreshold } from "@/lib/useDetectionThreshold";
+import { useI18n } from "@/lib/i18n";
 import { toast } from "sonner";
 
 export default function Analyze() {
+  const { t } = useI18n();
   const threshold = useDetectionThreshold();
   const [imgUrl, setImgUrl] = useState<string | null>(null);
   const [imgEl, setImgEl] = useState<HTMLImageElement | null>(null);
