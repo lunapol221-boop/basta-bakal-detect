@@ -14,16 +14,134 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      detection_logs: {
+        Row: {
+          confidence_scores: number[]
+          created_at: string
+          detected_labels: string[]
+          final_status: string
+          id: string
+          image_url: string | null
+          notes: string | null
+          scan_type: string
+        }
+        Insert: {
+          confidence_scores?: number[]
+          created_at?: string
+          detected_labels?: string[]
+          final_status: string
+          id?: string
+          image_url?: string | null
+          notes?: string | null
+          scan_type: string
+        }
+        Update: {
+          confidence_scores?: number[]
+          created_at?: string
+          detected_labels?: string[]
+          final_status?: string
+          id?: string
+          image_url?: string | null
+          notes?: string | null
+          scan_type?: string
+        }
+        Relationships: []
+      }
+      scan_images: {
+        Row: {
+          created_at: string
+          detection_log_id: string | null
+          id: string
+          mime_type: string | null
+          public_url: string | null
+          size_bytes: number | null
+          storage_path: string
+        }
+        Insert: {
+          created_at?: string
+          detection_log_id?: string | null
+          id?: string
+          mime_type?: string | null
+          public_url?: string | null
+          size_bytes?: number | null
+          storage_path: string
+        }
+        Update: {
+          created_at?: string
+          detection_log_id?: string | null
+          id?: string
+          mime_type?: string | null
+          public_url?: string | null
+          size_bytes?: number | null
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scan_images_detection_log_id_fkey"
+            columns: ["detection_log_id"]
+            isOneToOne: false
+            referencedRelation: "detection_logs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      system_settings: {
+        Row: {
+          id: string
+          key: string
+          updated_at: string
+          value: Json
+        }
+        Insert: {
+          id?: string
+          key: string
+          updated_at?: string
+          value?: Json
+        }
+        Update: {
+          id?: string
+          key?: string
+          updated_at?: string
+          value?: Json
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +268,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+    },
   },
 } as const
