@@ -106,19 +106,48 @@ export function verdictToResult(
   };
 }
 
+/**
+ * Convert a bbox returned by the AI into pixel [x, y, width, height]
+ * coordinates of the source image. Handles three common formats:
+ *   1. [x, y, w, h] in 0-1 normalized coords         (preferred)
+ *   2. [x, y, w, h] in pixel coords                  (already pixels)
+ *   3. [ymin, xmin, ymax, xmax] in 0-1000 ints       (Gemini default)
+ *   4. [ymin, xmin, ymax, xmax] in 0-1 normalized
+ */
 function normalizeBbox(
   bbox: number[] | undefined,
   w: number,
   h: number
 ): [number, number, number, number] {
   if (!bbox || bbox.length < 4) return [0, 0, 0, 0];
-  const [x, y, bw, bh] = bbox;
-  // Heuristic: if all values <= 1.5 we assume normalized 0-1 coords.
-  const isNormalized = [x, y, bw, bh].every((v) => v >= 0 && v <= 1.5);
-  if (isNormalized) {
-    return [x * w, y * h, bw * w, bh * h];
+  let [a, b, c, d] = bbox.map((n) => Number(n));
+  if ([a, b, c, d].some((n) => !Number.isFinite(n))) return [0, 0, 0, 0];
+
+  const maxVal = Math.max(a, b, c, d);
+
+  // Format 3: Gemini ymin,xmin,ymax,xmax in 0-1000 range
+  if (maxVal > 1.5 && maxVal <= 1000 && c > a && d > b && a < 1000 && b < 1000) {
+    const ymin = (a / 1000) * h;
+    const xmin = (b / 1000) * w;
+    const ymax = (c / 1000) * h;
+    const xmax = (d / 1000) * w;
+    return [xmin, ymin, Math.max(0, xmax - xmin), Math.max(0, ymax - ymin)];
   }
-  return [x, y, bw, bh];
+
+  // Normalized 0-1
+  if (maxVal <= 1.5) {
+    // Detect [ymin,xmin,ymax,xmax] vs [x,y,w,h]
+    // If c > a AND d > b AND (c+d > 1) it's likely y2/x2 corners.
+    const looksLikeCorners = c > a && d > b && (c > 1 || d > 1 || a + c <= 1.05 ? false : true);
+    if (looksLikeCorners) {
+      const ymin = a * h, xmin = b * w, ymax = c * h, xmax = d * w;
+      return [xmin, ymin, Math.max(0, xmax - xmin), Math.max(0, ymax - ymin)];
+    }
+    return [a * w, b * h, c * w, d * h];
+  }
+
+  // Format 2: already pixel [x,y,w,h]
+  return [a, b, c, d];
 }
 
 export function statusLabel(status: FinalStatus) {

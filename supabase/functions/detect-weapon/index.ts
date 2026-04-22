@@ -29,6 +29,13 @@ Decision rules:
 Toy guns, water guns, plastic obvious-toy weapons should be ALLOWED but mention them in objects.
 Kitchen knives held in a kitchen context are STILL flagged as NOT_ALLOWED (this is a checkpoint).
 
+For EVERY weapon you detect you MUST also return a bounding box.
+The bbox MUST be an array of 4 numbers in NORMALIZED 0.0-1.0 coordinates,
+in the order [x, y, width, height], where (x, y) is the TOP-LEFT corner of
+the box relative to the full image, and width/height are the box size.
+Do NOT use [ymin, xmin, ymax, xmax]. Do NOT use 0-1000 pixel coords.
+If you truly cannot localize a weapon, omit the bbox entirely.
+
 Respond with ONLY a single JSON object via the tool call. No prose.`;
 
 async function callLovableAI(imageDataUrl: string, apiKey: string) {
