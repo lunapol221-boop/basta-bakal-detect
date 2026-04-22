@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Camera, CameraOff, Loader2, Pause, Play, Activity, Zap, Target } from "lucide-react";
+import { Camera, CameraOff, Loader2, Pause, Play, Activity, Zap, Target, SwitchCamera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AppLayout from "@/components/AppLayout";
 import StatusBanner from "@/components/StatusBanner";
@@ -23,11 +23,16 @@ export default function LiveScan() {
   const [scanCount, setScanCount] = useState(0);
   const [lastFlagged, setLastFlagged] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
 
-  const startCamera = useCallback(async () => {
+  const startCamera = useCallback(async (mode?: "environment" | "user") => {
+    const useMode = mode ?? facingMode;
     try {
+      streamRef.current?.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } },
+        video: { facingMode: { ideal: useMode }, width: { ideal: 1280 }, height: { ideal: 720 } },
         audio: false,
       });
       streamRef.current = stream;
@@ -39,9 +44,16 @@ export default function LiveScan() {
       setPaused(false);
     } catch (e) {
       console.error("Camera error:", e);
-      toast.error("Camera access denied. Please allow camera permissions.");
+      toast.error("Camera access denied or camera not available.");
     }
-  }, []);
+  }, [facingMode]);
+
+  const switchCamera = useCallback(async () => {
+    const next = facingMode === "environment" ? "user" : "environment";
+    setFacingMode(next);
+    if (streaming) await startCamera(next);
+    else toast.success(`Switched to ${next === "user" ? "front" : "rear"} camera`);
+  }, [facingMode, streaming, startCamera]);
 
   const stopCamera = useCallback(() => {
     streamRef.current?.getTracks().forEach((t) => t.stop());
@@ -145,7 +157,7 @@ export default function LiveScan() {
                 ref={videoRef}
                 playsInline
                 muted
-                className="w-full h-full object-contain"
+                className={`w-full h-full object-contain ${facingMode === "user" ? "scale-x-[-1]" : ""}`}
               />
               {streaming && videoRef.current && result && (
                 <BoundingBoxOverlay
@@ -193,7 +205,7 @@ export default function LiveScan() {
             <div className="flex flex-wrap gap-2 mt-5">
               {!streaming ? (
                 <Button
-                  onClick={startCamera}
+                  onClick={() => startCamera()}
                   size="lg"
                   className="btn-orange rounded-full h-12 px-6 font-semibold"
                 >
@@ -220,6 +232,16 @@ export default function LiveScan() {
                   </Button>
                 </>
               )}
+              <Button
+                onClick={switchCamera}
+                variant="outline"
+                size="lg"
+                className="rounded-full h-12 px-6 border-border hover:border-primary/50 hover:bg-secondary"
+                title={`Switch to ${facingMode === "environment" ? "front" : "rear"} camera`}
+              >
+                <SwitchCamera className="h-4 w-4" />
+                {facingMode === "environment" ? "Front" : "Rear"} Camera
+              </Button>
             </div>
           </div>
 
