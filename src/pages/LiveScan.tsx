@@ -88,9 +88,13 @@ export default function LiveScan() {
         setScanCount((n) => n + 1);
         setError(null);
 
-        if (evald.status === "NOT_ALLOWED" && Date.now() - lastSavedRef.current > 4000) {
-          lastSavedRef.current = Date.now();
-          await saveFlaggedFrame(frame.blob, evald);
+        const now = Date.now();
+        const isFlagged = evald.status === "NOT_ALLOWED";
+        // Save flagged frames every 4s, allowed/unsure every 10s to avoid spam
+        const throttleMs = isFlagged ? 4000 : 10000;
+        if (now - lastSavedRef.current > throttleMs) {
+          lastSavedRef.current = now;
+          await saveFrame(frame.blob, evald);
         }
       } catch (e: any) {
         console.error("Detection error:", e);
@@ -109,21 +113,23 @@ export default function LiveScan() {
     };
   }, [streaming, paused]);
 
-  async function saveFlaggedFrame(blob: Blob, evald: DetectionResult) {
+  async function saveFrame(blob: Blob, evald: DetectionResult) {
     try {
       const upload = await uploadSnapshot(blob, "live");
       await logDetection({
         scanType: "live",
         result: evald,
         imageUrl: upload?.url ?? null,
-        notes: evald.reason || "Auto-saved flagged live frame",
+        notes: evald.reason || `Auto-saved live frame (${evald.status})`,
       });
       setLastFlagged(new Date().toLocaleTimeString());
-      toast.error(`Weapon detected: ${friendlyLabel(evald.topLabel)}`, {
-        description: "Frame saved to detection log.",
-      });
+      if (evald.status === "NOT_ALLOWED") {
+        toast.error(`Weapon detected: ${friendlyLabel(evald.topLabel)}`, {
+          description: "Frame saved to detection log.",
+        });
+      }
     } catch (e) {
-      console.error("Save flagged frame error:", e);
+      console.error("Save frame error:", e);
     }
   }
 
