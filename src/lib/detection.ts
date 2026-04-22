@@ -4,7 +4,7 @@
 
 export const WEAPON_LABELS = new Set<string>([
   "knife", "blade", "dagger", "machete", "sword", "katana",
-  "axe", "hatchet", "cleaver", "switchblade", "scissors",
+  "axe", "hatchet", "cleaver", "switchblade",
   "gun", "handgun", "pistol", "revolver", "rifle", "shotgun",
   "firearm", "submachine gun", "assault rifle",
   "bow", "crossbow", "grenade", "taser", "stun gun", "brass knuckles",
