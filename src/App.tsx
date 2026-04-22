@@ -4,7 +4,6 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/lib/auth";
-import RequireAdmin from "@/components/RequireAdmin";
 import Home from "./pages/Home";
 import LiveScan from "./pages/LiveScan";
 import Analyze from "./pages/Analyze";
@@ -33,14 +32,7 @@ const App = () => (
             <Route path="/scan" element={<LiveScan />} />
             <Route path="/analyze" element={<Analyze />} />
             <Route path="/admin/login" element={<AdminLogin />} />
-            <Route
-              path="/admin"
-              element={
-                <RequireAdmin>
-                  <AdminDashboard />
-                </RequireAdmin>
-              }
-            />
+            <Route path="/admin" element={<AdminDashboard />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
