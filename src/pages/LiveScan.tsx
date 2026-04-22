@@ -4,23 +4,25 @@ import { Button } from "@/components/ui/button";
 import AppLayout from "@/components/AppLayout";
 import StatusBanner from "@/components/StatusBanner";
 import BoundingBoxOverlay from "@/components/BoundingBoxOverlay";
-import { useDetector } from "@/lib/useDetector";
-import { evaluateDetections, friendlyLabel, type DetectionResult } from "@/lib/detection";
-import { canvasToBlob, logDetection, uploadSnapshot } from "@/lib/scanLogger";
+import { friendlyLabel, type DetectionResult } from "@/lib/detection";
+import { captureVideoFrame, detectWeaponInImage } from "@/lib/detectWithAI";
+import { logDetection, uploadSnapshot } from "@/lib/scanLogger";
 import { toast } from "sonner";
 
 const DETECT_INTERVAL_MS = 1500;
 
 export default function LiveScan() {
-  const { model, loading, error } = useDetector();
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const inFlightRef = useRef(false);
+  const lastSavedRef = useRef<number>(0);
   const [streaming, setStreaming] = useState(false);
   const [paused, setPaused] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
   const [result, setResult] = useState<DetectionResult | null>(null);
   const [scanCount, setScanCount] = useState(0);
   const [lastFlagged, setLastFlagged] = useState<string | null>(null);
-  const lastSavedRef = useRef<number>(0);
+  const [error, setError] = useState<string | null>(null);
 
   const startCamera = useCallback(async () => {
     try {
@@ -53,30 +55,37 @@ export default function LiveScan() {
   useEffect(() => () => stopCamera(), [stopCamera]);
 
   useEffect(() => {
-    if (!streaming || paused || !model || !videoRef.current) return;
+    if (!streaming || paused || !videoRef.current) return;
 
     let cancelled = false;
 
     const tick = async () => {
-      if (cancelled) return;
+      if (cancelled || inFlightRef.current) return;
       const video = videoRef.current;
       if (!video || video.readyState < 2) return;
 
+      const frame = await captureVideoFrame(video, 640, 0.65);
+      if (!frame) return;
+
+      inFlightRef.current = true;
+      setAnalyzing(true);
       try {
-        const preds = await model.detect(video);
-        const evald = evaluateDetections(
-          preds.map((p) => ({ class: p.class, score: p.score, bbox: p.bbox as [number, number, number, number] }))
-        );
+        const evald = await detectWeaponInImage(frame.dataUrl, frame.width, frame.height);
         if (cancelled) return;
         setResult(evald);
         setScanCount((n) => n + 1);
+        setError(null);
 
         if (evald.status === "NOT_ALLOWED" && Date.now() - lastSavedRef.current > 4000) {
           lastSavedRef.current = Date.now();
-          await saveFlaggedFrame(video, evald);
+          await saveFlaggedFrame(frame.blob, evald);
         }
-      } catch (e) {
+      } catch (e: any) {
         console.error("Detection error:", e);
+        setError(e?.message ?? "Detection failed");
+      } finally {
+        inFlightRef.current = false;
+        setAnalyzing(false);
       }
     };
 
@@ -86,23 +95,16 @@ export default function LiveScan() {
       cancelled = true;
       window.clearInterval(id);
     };
-  }, [streaming, paused, model]);
+  }, [streaming, paused]);
 
-  async function saveFlaggedFrame(video: HTMLVideoElement, evald: DetectionResult) {
+  async function saveFlaggedFrame(blob: Blob, evald: DetectionResult) {
     try {
-      const canvas = document.createElement("canvas");
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
-      ctx.drawImage(video, 0, 0);
-      const blob = await canvasToBlob(canvas, "image/jpeg", 0.8);
       const upload = await uploadSnapshot(blob, "live");
       await logDetection({
         scanType: "live",
         result: evald,
         imageUrl: upload?.url ?? null,
-        notes: "Auto-saved flagged live frame",
+        notes: evald.reason || "Auto-saved flagged live frame",
       });
       setLastFlagged(new Date().toLocaleTimeString());
       toast.error(`Weapon detected: ${friendlyLabel(evald.topLabel)}`, {
@@ -124,14 +126,14 @@ export default function LiveScan() {
             Live <span className="text-orange-gradient">Scan</span>
           </h1>
           <p className="text-muted-foreground max-w-2xl">
-            Stream from your webcam with continuous AI analysis. Flagged frames
-            are automatically captured and added to the audit log.
+            Stream from your webcam with AI vision analysis every {DETECT_INTERVAL_MS}ms.
+            Flagged frames are automatically captured and added to the audit log.
           </p>
         </div>
 
         {error && (
           <div className="surface rounded-2xl p-6 border-destructive/50 mb-6">
-            <p className="text-destructive font-medium">Failed to load detection model</p>
+            <p className="text-destructive font-medium">Detection error</p>
             <p className="text-sm text-muted-foreground mt-1">{error}</p>
           </div>
         )}
@@ -147,7 +149,7 @@ export default function LiveScan() {
               />
               {streaming && videoRef.current && result && (
                 <BoundingBoxOverlay
-                  detections={result.detections}
+                  detections={result.detections.filter((d) => d.bbox[2] > 0 && d.bbox[3] > 0)}
                   source={videoRef.current}
                   className="absolute inset-0 w-full h-full object-contain pointer-events-none"
                 />
@@ -168,30 +170,21 @@ export default function LiveScan() {
 
               {!streaming && (
                 <div className="absolute inset-0 flex items-center justify-center flex-col gap-4 text-muted-foreground">
-                  {loading ? (
-                    <>
-                      <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                      <p className="font-mono text-sm tracking-[0.2em] uppercase">Loading AI Model</p>
-                    </>
-                  ) : (
-                    <>
-                      <div className="h-16 w-16 rounded-2xl bg-primary/10 border border-primary/30 flex items-center justify-center">
-                        <Camera className="h-7 w-7 text-primary" />
-                      </div>
-                      <p className="font-mono text-xs tracking-[0.2em] uppercase">Camera Offline</p>
-                      <p className="text-sm text-center max-w-xs px-6">
-                        Click "Start Camera" to begin live screening.
-                      </p>
-                    </>
-                  )}
+                  <div className="h-16 w-16 rounded-2xl bg-primary/10 border border-primary/30 flex items-center justify-center">
+                    <Camera className="h-7 w-7 text-primary" />
+                  </div>
+                  <p className="font-mono text-xs tracking-[0.2em] uppercase">Camera Offline</p>
+                  <p className="text-sm text-center max-w-xs px-6">
+                    Click "Start Camera" to begin live screening.
+                  </p>
                 </div>
               )}
 
               {streaming && (
                 <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3 py-1.5 rounded-full bg-background/80 backdrop-blur-md border border-border">
-                  <span className={`h-2 w-2 rounded-full ${paused ? "bg-warning" : "bg-destructive animate-blink"}`} />
+                  <span className={`h-2 w-2 rounded-full ${paused ? "bg-warning" : analyzing ? "bg-primary animate-blink" : "bg-destructive animate-blink"}`} />
                   <span className="text-[10px] font-mono uppercase tracking-[0.2em]">
-                    {paused ? "Paused" : "● REC"}
+                    {paused ? "Paused" : analyzing ? "● Analyzing" : "● REC"}
                   </span>
                 </div>
               )}
@@ -201,7 +194,6 @@ export default function LiveScan() {
               {!streaming ? (
                 <Button
                   onClick={startCamera}
-                  disabled={loading || !model}
                   size="lg"
                   className="btn-orange rounded-full h-12 px-6 font-semibold"
                 >
@@ -237,6 +229,15 @@ export default function LiveScan() {
               topLabel={result?.topLabel ? friendlyLabel(result.topLabel) : null}
               topScore={result?.topScore ?? null}
             />
+
+            {result?.reason && (
+              <div className="surface rounded-2xl p-4">
+                <p className="text-[11px] font-mono tracking-[0.2em] uppercase text-muted-foreground mb-2">
+                  AI Reasoning
+                </p>
+                <p className="text-sm">{result.reason}</p>
+              </div>
+            )}
 
             <div className="surface rounded-2xl p-5">
               <p className="text-[11px] font-mono tracking-[0.2em] uppercase text-muted-foreground mb-4">
