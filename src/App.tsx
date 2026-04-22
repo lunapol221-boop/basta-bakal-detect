@@ -3,10 +3,23 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import Index from "./pages/Index.tsx";
+import { AuthProvider } from "@/lib/auth";
+import RequireAdmin from "@/components/RequireAdmin";
+import Home from "./pages/Home";
+import LiveScan from "./pages/LiveScan";
+import Analyze from "./pages/Analyze";
+import AdminLogin from "./pages/AdminLogin";
+import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound.tsx";
+import AppLayout from "./components/AppLayout";
 
 const queryClient = new QueryClient();
+
+const HomeWithLayout = () => (
+  <AppLayout>
+    <Home />
+  </AppLayout>
+);
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -14,11 +27,23 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <AuthProvider>
+          <Routes>
+            <Route path="/" element={<HomeWithLayout />} />
+            <Route path="/scan" element={<LiveScan />} />
+            <Route path="/analyze" element={<Analyze />} />
+            <Route path="/admin/login" element={<AdminLogin />} />
+            <Route
+              path="/admin"
+              element={
+                <RequireAdmin>
+                  <AdminDashboard />
+                </RequireAdmin>
+              }
+            />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
