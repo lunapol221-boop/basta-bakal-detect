@@ -1,7 +1,7 @@
 import { CheckCircle2, ShieldAlert, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { FinalStatus } from "@/lib/detection";
-import { statusLabel } from "@/lib/detection";
+import { useI18n } from "@/lib/i18n";
 
 interface Props {
   status: FinalStatus | null;
@@ -11,18 +11,18 @@ interface Props {
 }
 
 export default function StatusBanner({ status, topLabel, topScore, className }: Props) {
+  const { t } = useI18n();
+
   if (!status) {
     return (
       <div className={cn("surface rounded-2xl p-6 text-center", className)}>
         <div className="inline-flex items-center gap-2 mb-2">
           <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/60 animate-blink" />
           <p className="text-muted-foreground font-mono text-[11px] tracking-[0.2em] uppercase">
-            Awaiting Scan
+            {t("status.awaiting")}
           </p>
         </div>
-        <p className="text-sm text-muted-foreground">
-          Result will appear here once analysis completes.
-        </p>
+        <p className="text-sm text-muted-foreground">{t("status.awaitingHint")}</p>
       </div>
     );
   }
@@ -30,8 +30,8 @@ export default function StatusBanner({ status, topLabel, topScore, className }: 
   const config = {
     ALLOWED: {
       icon: CheckCircle2,
-      label: statusLabel("ALLOWED"),
-      sublabel: "Cleared for entry",
+      label: t("status.allowed"),
+      sublabel: t("home.outcome.allowed.desc"),
       ringClass: "ring-1 ring-success/40",
       textClass: "text-success",
       bgGradient: "linear-gradient(135deg, hsl(142 70% 48% / 0.18), hsl(160 65% 42% / 0.06))",
@@ -39,8 +39,8 @@ export default function StatusBanner({ status, topLabel, topScore, className }: 
     },
     NOT_ALLOWED: {
       icon: ShieldAlert,
-      label: statusLabel("NOT_ALLOWED"),
-      sublabel: "Deadly weapon detected",
+      label: t("status.notAllowed"),
+      sublabel: t("home.outcome.notallowed.desc"),
       ringClass: "ring-1 ring-destructive/50 animate-pulse-danger",
       textClass: "text-destructive",
       bgGradient: "linear-gradient(135deg, hsl(0 84% 55% / 0.22), hsl(348 80% 50% / 0.08))",
@@ -48,8 +48,8 @@ export default function StatusBanner({ status, topLabel, topScore, className }: 
     },
     UNSURE: {
       icon: AlertTriangle,
-      label: statusLabel("UNSURE"),
-      sublabel: "Confidence too low",
+      label: t("status.unsure"),
+      sublabel: t("home.outcome.unsure.desc"),
       ringClass: "ring-1 ring-warning/40",
       textClass: "text-warning",
       bgGradient: "linear-gradient(135deg, hsl(42 100% 58% / 0.2), hsl(28 90% 50% / 0.06))",
@@ -75,7 +75,7 @@ export default function StatusBanner({ status, topLabel, topScore, className }: 
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-[11px] font-mono uppercase tracking-[0.2em] text-muted-foreground mb-1">
-            Final Decision
+            {t("status.awaiting") /* visually replaced by main label */ ? "" : ""}
           </p>
           <p className={cn("font-display text-2xl sm:text-[28px] font-bold leading-tight tracking-tight", config.textClass)}>
             {config.label}

@@ -2,22 +2,23 @@ import { ReactNode } from "react";
 import { Link, NavLink as RRNavLink, useNavigate } from "react-router-dom";
 import { Radio, Upload, LayoutDashboard, LogOut, Menu } from "lucide-react";
 import { useAuth } from "@/lib/auth";
+import { useI18n } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import Logo from "./Logo";
-
-const nav = [
-  { to: "/scan", label: "Live Scan", icon: Radio },
-  { to: "/analyze", label: "Analyze", icon: Upload },
-  { to: "/admin", label: "Dashboard", icon: LayoutDashboard, adminOnly: true },
-];
+import LanguageToggle from "./LanguageToggle";
 
 export default function AppLayout({ children }: { children: ReactNode }) {
   const { isAdmin, user, signOut } = useAuth();
+  const { t } = useI18n();
   const navigate = useNavigate();
 
-  const navItems = nav.filter((n) => !n.adminOnly || isAdmin);
+  const nav = [
+    { to: "/scan", label: t("nav.live"), icon: Radio },
+    { to: "/analyze", label: t("nav.analyze"), icon: Upload },
+    { to: "/admin", label: t("nav.dashboard"), icon: LayoutDashboard },
+  ];
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -30,13 +31,13 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                 BastaBakal<span className="text-orange-gradient">Bawal</span>
               </span>
               <span className="text-[10px] font-mono text-muted-foreground tracking-[0.18em] uppercase mt-0.5">
-                AI Security Screening
+                {t("brand.tagline")}
               </span>
             </div>
           </Link>
 
           <nav className="hidden md:flex items-center gap-1 surface rounded-full p-1">
-            {navItems.map((item) => {
+            {nav.map((item) => {
               const Icon = item.icon;
               return (
                 <RRNavLink
@@ -59,12 +60,13 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           </nav>
 
           <div className="hidden md:flex items-center gap-3">
+            <LanguageToggle />
             {user ? (
               <>
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-full surface">
                   <span className="h-1.5 w-1.5 rounded-full bg-primary animate-blink" />
                   <span className="text-[11px] font-mono uppercase tracking-widest text-muted-foreground">
-                    {isAdmin ? "Admin" : "User"}
+                    {isAdmin ? t("nav.role.admin") : t("nav.role.user")}
                   </span>
                 </div>
                 <Button
@@ -75,14 +77,14 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                     await signOut();
                     navigate("/");
                   }}
-                  aria-label="Sign out"
+                  aria-label={t("nav.signOut")}
                 >
                   <LogOut className="h-4 w-4" />
                 </Button>
               </>
             ) : (
               <Button asChild size="sm" className="btn-orange rounded-full px-5">
-                <Link to="/admin/login">Admin</Link>
+                <Link to="/admin/login">{t("nav.admin")}</Link>
               </Button>
             )}
           </div>
@@ -103,7 +105,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                   </span>
                 </Link>
                 <div className="flex flex-col gap-1">
-                  {navItems.map((item) => {
+                  {nav.map((item) => {
                     const Icon = item.icon;
                     return (
                       <RRNavLink
@@ -124,7 +126,10 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                     );
                   })}
                 </div>
-                <div className="mt-auto pt-6 border-t border-border">
+                <div className="mt-auto pt-6 border-t border-border space-y-3">
+                  <div className="flex justify-center">
+                    <LanguageToggle />
+                  </div>
                   {user ? (
                     <Button
                       variant="outline"
@@ -134,11 +139,11 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                         navigate("/");
                       }}
                     >
-                      <LogOut className="h-4 w-4" /> Sign out
+                      <LogOut className="h-4 w-4" /> {t("nav.signOut")}
                     </Button>
                   ) : (
                     <Button asChild className="w-full btn-orange">
-                      <Link to="/admin/login">Admin Login</Link>
+                      <Link to="/admin/login">{t("nav.adminLogin")}</Link>
                     </Button>
                   )}
                 </div>
@@ -157,7 +162,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             <span className="font-display font-semibold text-sm">BastaBakalBawal</span>
           </div>
           <p className="text-[11px] font-mono text-muted-foreground tracking-widest uppercase">
-            © {new Date().getFullYear()} · AI Weapon Screening Platform
+            {t("footer.brandLine", { year: new Date().getFullYear() })}
           </p>
         </div>
       </footer>
