@@ -21,7 +21,6 @@ export const FRIENDLY_LABELS: Record<string, string> = {
   hatchet: "Hatchet",
   cleaver: "Cleaver",
   switchblade: "Switchblade",
-  scissors: "Scissors",
   gun: "Gun",
   handgun: "Handgun",
   pistol: "Pistol",
