@@ -4,13 +4,12 @@ import { Button } from "@/components/ui/button";
 import AppLayout from "@/components/AppLayout";
 import StatusBanner from "@/components/StatusBanner";
 import BoundingBoxOverlay from "@/components/BoundingBoxOverlay";
-import { useDetector } from "@/lib/useDetector";
-import { evaluateDetections, friendlyLabel, type DetectionResult } from "@/lib/detection";
+import { friendlyLabel, type DetectionResult } from "@/lib/detection";
+import { detectWeaponInImage, fileToDataUrl } from "@/lib/detectWithAI";
 import { logDetection, uploadSnapshot } from "@/lib/scanLogger";
 import { toast } from "sonner";
 
 export default function Analyze() {
-  const { model, loading, error } = useDetector();
   const [imgUrl, setImgUrl] = useState<string | null>(null);
   const [imgEl, setImgEl] = useState<HTMLImageElement | null>(null);
   const [result, setResult] = useState<DetectionResult | null>(null);
@@ -32,27 +31,28 @@ export default function Analyze() {
     const img = new Image();
     img.onload = async () => {
       setImgEl(img);
-      await analyze(img, file, scanType);
+      await analyze(file, scanType);
     };
     img.src = url;
   }
 
-  async function analyze(img: HTMLImageElement, file: File, scanType: "upload" | "capture") {
-    if (!model) return;
+  async function analyze(file: File, scanType: "upload" | "capture") {
     setAnalyzing(true);
     try {
-      const preds = await model.detect(img);
-      const evald = evaluateDetections(
-        preds.map((p) => ({ class: p.class, score: p.score, bbox: p.bbox as [number, number, number, number] }))
+      const prepared = await fileToDataUrl(file, 1024, 0.85);
+      const evald = await detectWeaponInImage(
+        prepared.dataUrl,
+        prepared.width,
+        prepared.height
       );
       setResult(evald);
 
-      const upload = await uploadSnapshot(file, scanType);
+      const upload = await uploadSnapshot(prepared.blob, scanType);
       await logDetection({
         scanType,
         result: evald,
         imageUrl: upload?.url ?? null,
-        notes: scanType === "capture" ? "Camera capture" : "Manual upload",
+        notes: evald.reason || (scanType === "capture" ? "Camera capture" : "Manual upload"),
       });
       setSavedTime(new Date().toLocaleTimeString());
 
@@ -98,16 +98,9 @@ export default function Analyze() {
           </h1>
           <p className="text-muted-foreground max-w-2xl">
             Capture from your camera or upload an image. The result is logged
-            automatically with the snapshot and confidence scores.
+            automatically with the snapshot and AI confidence score.
           </p>
         </div>
-
-        {error && (
-          <div className="surface rounded-2xl p-6 border-destructive/50 mb-6">
-            <p className="text-destructive font-medium">Failed to load detection model</p>
-            <p className="text-sm text-muted-foreground mt-1">{error}</p>
-          </div>
-        )}
 
         <div className="grid lg:grid-cols-[1fr_380px] gap-6">
           <div>
@@ -131,7 +124,7 @@ export default function Analyze() {
                   />
                   {imgEl && result && (
                     <BoundingBoxOverlay
-                      detections={result.detections}
+                      detections={result.detections.filter((d) => d.bbox[2] > 0 && d.bbox[3] > 0)}
                       source={imgEl}
                       className="absolute inset-0 w-full h-full object-contain pointer-events-none"
                     />
@@ -141,7 +134,7 @@ export default function Analyze() {
                       <div className="flex items-center gap-3 text-primary">
                         <Loader2 className="h-6 w-6 animate-spin" />
                         <span className="font-mono tracking-[0.2em] uppercase text-sm">
-                          Analyzing
+                          AI Analyzing
                         </span>
                       </div>
                     </div>
@@ -153,26 +146,17 @@ export default function Analyze() {
                   onClick={() => fileInputRef.current?.click()}
                   className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-muted-foreground p-6 hover:text-foreground transition-colors w-full"
                 >
-                  {loading ? (
-                    <>
-                      <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                      <p className="font-mono text-sm tracking-[0.2em] uppercase">Loading AI Model</p>
-                    </>
-                  ) : (
-                    <>
-                      <div className="h-20 w-20 rounded-2xl bg-primary/10 border-2 border-dashed border-primary/40 flex items-center justify-center">
-                        <FileImage className="h-9 w-9 text-primary" />
-                      </div>
-                      <div className="text-center">
-                        <p className="font-display text-lg font-semibold text-foreground mb-1">
-                          Drop an image or click to browse
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          PNG, JPG, WebP — up to 20 MB
-                        </p>
-                      </div>
-                    </>
-                  )}
+                  <div className="h-20 w-20 rounded-2xl bg-primary/10 border-2 border-dashed border-primary/40 flex items-center justify-center">
+                    <FileImage className="h-9 w-9 text-primary" />
+                  </div>
+                  <div className="text-center">
+                    <p className="font-display text-lg font-semibold text-foreground mb-1">
+                      Drop an image or click to browse
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      PNG, JPG, WebP — up to 20 MB
+                    </p>
+                  </div>
                 </button>
               )}
             </div>
@@ -180,7 +164,7 @@ export default function Analyze() {
             <div className="flex flex-wrap gap-2 mt-5">
               <Button
                 onClick={() => fileInputRef.current?.click()}
-                disabled={loading || !model || analyzing}
+                disabled={analyzing}
                 size="lg"
                 className="btn-orange rounded-full h-12 px-6 font-semibold"
               >
@@ -188,7 +172,7 @@ export default function Analyze() {
               </Button>
               <Button
                 onClick={() => cameraInputRef.current?.click()}
-                disabled={loading || !model || analyzing}
+                disabled={analyzing}
                 size="lg"
                 variant="outline"
                 className="rounded-full h-12 px-6 border-border hover:border-primary/50 hover:bg-secondary"
@@ -237,6 +221,15 @@ export default function Analyze() {
               topLabel={result?.topLabel ? friendlyLabel(result.topLabel) : null}
               topScore={result?.topScore ?? null}
             />
+
+            {result?.reason && (
+              <div className="surface rounded-2xl p-4">
+                <p className="text-[11px] font-mono tracking-[0.2em] uppercase text-muted-foreground mb-2">
+                  AI Reasoning
+                </p>
+                <p className="text-sm">{result.reason}</p>
+              </div>
+            )}
 
             {result && (
               <div className="surface rounded-2xl p-5">
