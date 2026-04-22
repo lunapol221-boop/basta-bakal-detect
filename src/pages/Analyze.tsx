@@ -7,9 +7,11 @@ import BoundingBoxOverlay from "@/components/BoundingBoxOverlay";
 import { friendlyLabel, type DetectionResult } from "@/lib/detection";
 import { detectWeaponInImage, fileToDataUrl } from "@/lib/detectWithAI";
 import { logDetection, uploadSnapshot } from "@/lib/scanLogger";
+import { applyThreshold, useDetectionThreshold } from "@/lib/useDetectionThreshold";
 import { toast } from "sonner";
 
 export default function Analyze() {
+  const threshold = useDetectionThreshold();
   const [imgUrl, setImgUrl] = useState<string | null>(null);
   const [imgEl, setImgEl] = useState<HTMLImageElement | null>(null);
   const [result, setResult] = useState<DetectionResult | null>(null);
@@ -40,11 +42,12 @@ export default function Analyze() {
     setAnalyzing(true);
     try {
       const prepared = await fileToDataUrl(file, 1024, 0.85);
-      const evald = await detectWeaponInImage(
+      const raw = await detectWeaponInImage(
         prepared.dataUrl,
         prepared.width,
         prepared.height
       );
+      const evald = applyThreshold(raw, threshold);
       setResult(evald);
 
       const upload = await uploadSnapshot(prepared.blob, scanType);
@@ -126,6 +129,7 @@ export default function Analyze() {
                     <BoundingBoxOverlay
                       detections={result.detections.filter((d) => d.bbox[2] > 0 && d.bbox[3] > 0)}
                       source={imgEl}
+                      threshold={threshold}
                       className="absolute inset-0 w-full h-full object-contain pointer-events-none"
                     />
                   )}

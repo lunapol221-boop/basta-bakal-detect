@@ -7,11 +7,13 @@ import BoundingBoxOverlay from "@/components/BoundingBoxOverlay";
 import { friendlyLabel, type DetectionResult } from "@/lib/detection";
 import { captureVideoFrame, detectWeaponInImage } from "@/lib/detectWithAI";
 import { logDetection, uploadSnapshot } from "@/lib/scanLogger";
+import { applyThreshold, useDetectionThreshold } from "@/lib/useDetectionThreshold";
 import { toast } from "sonner";
 
 const DETECT_INTERVAL_MS = 1500;
 
 export default function LiveScan() {
+  const threshold = useDetectionThreshold();
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const inFlightRef = useRef(false);
@@ -82,8 +84,9 @@ export default function LiveScan() {
       inFlightRef.current = true;
       setAnalyzing(true);
       try {
-        const evald = await detectWeaponInImage(frame.dataUrl, frame.width, frame.height);
+        const raw = await detectWeaponInImage(frame.dataUrl, frame.width, frame.height);
         if (cancelled) return;
+        const evald = applyThreshold(raw, threshold);
         setResult(evald);
         setScanCount((n) => n + 1);
         setError(null);
@@ -169,6 +172,7 @@ export default function LiveScan() {
                 <BoundingBoxOverlay
                   detections={result.detections.filter((d) => d.bbox[2] > 0 && d.bbox[3] > 0)}
                   source={videoRef.current}
+                  threshold={threshold}
                   className="absolute inset-0 w-full h-full object-contain pointer-events-none"
                 />
               )}
