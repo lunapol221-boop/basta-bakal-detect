@@ -21,13 +21,23 @@ Deadly weapons (NOT_ALLOWED) include any of:
 - Bladed weapons: knife, dagger, blade, machete, sword, katana, axe, hatchet, cleaver, switchblade
 - Other: bow with arrows, crossbow, brass knuckles, taser, stun gun, grenade
 
+ALWAYS ALLOWED (this is a SCHOOL checkpoint — common school materials are permitted):
+- Scissors (any kind, including craft, art, or office scissors)
+- Pencils, pens, markers, highlighters, crayons
+- Rulers, protractors, compasses (geometry set), staplers, paper clips, push pins
+- Calculators, notebooks, books, folders, binders, backpacks, lunch boxes
+- Art supplies, glue, tape, erasers, sharpeners
+- Laptops, tablets, phones, chargers, headphones
+- Sports gear (balls, rackets, jump ropes), musical instruments
+
 Decision rules:
 - If you clearly see a deadly weapon -> status="NOT_ALLOWED"
+- If the only sharp/pointy items are school materials from the ALLOWED list above -> status="ALLOWED"
 - If image is clearly safe (no weapon, just a person/object/empty scene) -> status="ALLOWED"
 - If image is too blurry, too dark, ambiguous, or you are not confident -> status="UNSURE"
 
 Toy guns, water guns, plastic obvious-toy weapons should be ALLOWED but mention them in objects.
-Kitchen knives held in a kitchen context are STILL flagged as NOT_ALLOWED (this is a checkpoint).
+Scissors and school supplies must NEVER be reported in the "weapons" array — put them in "objects".
 
 For EVERY weapon you detect you MUST also return a bounding box.
 The bbox MUST be an array of 4 numbers in NORMALIZED 0.0-1.0 coordinates,
