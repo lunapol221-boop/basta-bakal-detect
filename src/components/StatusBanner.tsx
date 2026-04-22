@@ -13,9 +13,15 @@ interface Props {
 export default function StatusBanner({ status, topLabel, topScore, className }: Props) {
   if (!status) {
     return (
-      <div className={cn("glass rounded-xl p-6 text-center", className)}>
-        <p className="text-muted-foreground font-mono text-sm tracking-widest uppercase">
-          AWAITING SCAN
+      <div className={cn("surface rounded-2xl p-6 text-center", className)}>
+        <div className="inline-flex items-center gap-2 mb-2">
+          <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/60 animate-blink" />
+          <p className="text-muted-foreground font-mono text-[11px] tracking-[0.2em] uppercase">
+            Awaiting Scan
+          </p>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          Result will appear here once analysis completes.
         </p>
       </div>
     );
@@ -25,26 +31,29 @@ export default function StatusBanner({ status, topLabel, topScore, className }: 
     ALLOWED: {
       icon: CheckCircle2,
       label: statusLabel("ALLOWED"),
-      bg: "bg-success/10 border-success/40",
-      text: "text-success",
-      glow: "glow-success",
-      gradient: "var(--gradient-success)",
+      sublabel: "Cleared for entry",
+      ringClass: "ring-1 ring-success/40",
+      textClass: "text-success",
+      bgGradient: "linear-gradient(135deg, hsl(142 70% 48% / 0.18), hsl(160 65% 42% / 0.06))",
+      shadowClass: "shadow-[0_10px_40px_-10px_hsl(142_70%_48%/0.45)]",
     },
     NOT_ALLOWED: {
       icon: ShieldAlert,
       label: statusLabel("NOT_ALLOWED"),
-      bg: "bg-destructive/10 border-destructive/50",
-      text: "text-destructive",
-      glow: "glow-danger animate-pulse-glow",
-      gradient: "var(--gradient-danger)",
+      sublabel: "Deadly weapon detected",
+      ringClass: "ring-1 ring-destructive/50 animate-pulse-danger",
+      textClass: "text-destructive",
+      bgGradient: "linear-gradient(135deg, hsl(0 84% 55% / 0.22), hsl(348 80% 50% / 0.08))",
+      shadowClass: "shadow-[0_10px_40px_-10px_hsl(0_84%_60%/0.55)]",
     },
     UNSURE: {
       icon: AlertTriangle,
       label: statusLabel("UNSURE"),
-      bg: "bg-warning/10 border-warning/40",
-      text: "text-warning",
-      glow: "glow-warning",
-      gradient: "var(--gradient-warning)",
+      sublabel: "Confidence too low",
+      ringClass: "ring-1 ring-warning/40",
+      textClass: "text-warning",
+      bgGradient: "linear-gradient(135deg, hsl(42 100% 58% / 0.2), hsl(28 90% 50% / 0.06))",
+      shadowClass: "shadow-[0_10px_40px_-10px_hsl(42_100%_58%/0.45)]",
     },
   }[status];
 
@@ -53,28 +62,39 @@ export default function StatusBanner({ status, topLabel, topScore, className }: 
   return (
     <div
       className={cn(
-        "rounded-xl border-2 p-6 flex items-center gap-5 animate-fade-up",
-        config.bg,
-        config.glow,
+        "rounded-2xl p-6 animate-fade-up overflow-hidden relative",
+        config.ringClass,
+        config.shadowClass,
         className
       )}
-      style={{ background: config.gradient }}
+      style={{ background: config.bgGradient, backgroundColor: "hsl(var(--card))" }}
     >
-      <Icon className={cn("h-12 w-12 shrink-0", config.text)} strokeWidth={2} />
-      <div className="flex-1 min-w-0">
-        <p className={cn("text-2xl sm:text-3xl font-bold tracking-tight", config.text)}>
-          {config.label}
-        </p>
-        {topLabel && (
-          <p className="text-sm font-mono text-muted-foreground mt-1 truncate">
-            {topLabel.toUpperCase()}
-            {typeof topScore === "number" && (
-              <span className="ml-2 text-foreground/70">
-                · {(topScore * 100).toFixed(1)}%
-              </span>
-            )}
+      <div className="flex items-start gap-4">
+        <div className={cn("h-14 w-14 rounded-2xl flex items-center justify-center shrink-0", "bg-background/40 backdrop-blur")}>
+          <Icon className={cn("h-7 w-7", config.textClass)} strokeWidth={2.2} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-[11px] font-mono uppercase tracking-[0.2em] text-muted-foreground mb-1">
+            Final Decision
           </p>
-        )}
+          <p className={cn("font-display text-2xl sm:text-[28px] font-bold leading-tight tracking-tight", config.textClass)}>
+            {config.label}
+          </p>
+          <p className="text-sm text-muted-foreground mt-1">{config.sublabel}</p>
+          {topLabel && (
+            <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-background/50 backdrop-blur border border-border/50">
+              <span className="text-xs font-mono text-foreground">{topLabel.toUpperCase()}</span>
+              {typeof topScore === "number" && (
+                <>
+                  <span className="text-muted-foreground">·</span>
+                  <span className="text-xs font-mono text-muted-foreground">
+                    {(topScore * 100).toFixed(1)}%
+                  </span>
+                </>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
