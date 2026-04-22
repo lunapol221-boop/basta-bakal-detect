@@ -157,7 +157,7 @@ export default function LiveScan() {
                 ref={videoRef}
                 playsInline
                 muted
-                className="w-full h-full object-contain"
+                className={`w-full h-full object-contain ${facingMode === "user" ? "scale-x-[-1]" : ""}`}
               />
               {streaming && videoRef.current && result && (
                 <BoundingBoxOverlay
@@ -205,7 +205,7 @@ export default function LiveScan() {
             <div className="flex flex-wrap gap-2 mt-5">
               {!streaming ? (
                 <Button
-                  onClick={startCamera}
+                  onClick={() => startCamera()}
                   size="lg"
                   className="btn-orange rounded-full h-12 px-6 font-semibold"
                 >
@@ -232,6 +232,16 @@ export default function LiveScan() {
                   </Button>
                 </>
               )}
+              <Button
+                onClick={switchCamera}
+                variant="outline"
+                size="lg"
+                className="rounded-full h-12 px-6 border-border hover:border-primary/50 hover:bg-secondary"
+                title={`Switch to ${facingMode === "environment" ? "front" : "rear"} camera`}
+              >
+                <SwitchCamera className="h-4 w-4" />
+                {facingMode === "environment" ? "Front" : "Rear"} Camera
+              </Button>
             </div>
           </div>
 
