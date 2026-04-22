@@ -101,21 +101,23 @@ export default function LiveScan() {
     };
   }, [streaming, paused]);
 
-  async function saveFlaggedFrame(blob: Blob, evald: DetectionResult) {
+  async function saveFrame(blob: Blob, evald: DetectionResult) {
     try {
       const upload = await uploadSnapshot(blob, "live");
       await logDetection({
         scanType: "live",
         result: evald,
         imageUrl: upload?.url ?? null,
-        notes: evald.reason || "Auto-saved flagged live frame",
+        notes: evald.reason || `Auto-saved live frame (${evald.status})`,
       });
       setLastFlagged(new Date().toLocaleTimeString());
-      toast.error(`Weapon detected: ${friendlyLabel(evald.topLabel)}`, {
-        description: "Frame saved to detection log.",
-      });
+      if (evald.status === "NOT_ALLOWED") {
+        toast.error(`Weapon detected: ${friendlyLabel(evald.topLabel)}`, {
+          description: "Frame saved to detection log.",
+        });
+      }
     } catch (e) {
-      console.error("Save flagged frame error:", e);
+      console.error("Save frame error:", e);
     }
   }
 
